@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskFlow — Dashboard</title>
+  <link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+<div class="dashboard">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>TaskFlow</h2>
+      <div class="user-info">
+        <div id="sidebarName">Loading...</div>
+        <div id="sidebarEmail" style="font-size:11px"></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item" data-panel="projects"><span class="icon">📋</span> My Projects</div>
+      <div class="nav-item" data-panel="myTasks"><span class="icon">✅</span> My Tasks</div>
+      <div class="nav-item hidden" id="navUsers" data-panel="users"><span class="icon">👥</span> All Users</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="btn btn-secondary btn-full">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <header class="main-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button id="btnBackToProjects" class="btn btn-secondary btn-sm hidden" onclick="Dashboard.showPanel('projects')">← Back</button>
+        <h1 id="panelTitle">My Projects</h1>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button id="btnNewProject" class="btn btn-primary hidden" onclick="Projects.openCreateModal()">+ New Project</button>
+        <button id="btnNewTask" class="btn btn-primary hidden" onclick="Tasks.openCreateModal()">+ New Task</button>
+      </div>
+    </header>
+
+    <div class="main-content">
+
+      <!-- Projects List Panel -->
+      <div id="panel-projects" class="panel active">
+        <div id="projectGrid" class="grid-3">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- Project Detail Panel -->
+      <div id="panel-projectDetail" class="panel">
+        <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start">
+          <!-- Left: project info + tasks -->
+          <div>
+            <div class="card" style="margin-bottom:20px">
+              <div class="card-header">
+                <h3 id="detailName">Project</h3>
+                <button id="editProjectBtn" class="btn btn-secondary btn-sm hidden" onclick="Projects.openCreateModal()">Edit</button>
+              </div>
+              <p id="detailDesc" style="color:var(--gray-600);margin-bottom:12px"></p>
+              <div style="display:flex;gap:16px;font-size:13px;flex-wrap:wrap">
+                <div><span style="color:var(--gray-400)">Status: </span><span id="detailStatus"></span></div>
+                <div><span style="color:var(--gray-400)">Due: </span><span id="detailDue"></span></div>
+                <div><span style="color:var(--gray-400)">Owner: </span><span id="detailOwner"></span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><h3>Tasks</h3></div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Title</th><th>Status</th><th>Priority</th><th>Assignee</th><th>Due</th><th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="taskTableBody">
+                    <tr><td colspan="6" class="loading"><div class="spinner"></div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: members -->
+          <div class="card">
+            <div class="card-header"><h3>Members</h3></div>
+            <div id="memberList" class="member-list"></div>
+            <div id="addMemberSection" class="hidden" style="margin-top:12px">
+              <div class="form-group">
+                <label>Add Member</label>
+                <select id="addMemberSelect">
+                  <option value="">Select user...</option>
+                </select>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="Projects.addMember()">Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- My Tasks Panel -->
+      <div id="panel-myTasks" class="panel">
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Task</th><th>Project</th><th>Status</th><th>Priority</th><th>Due</th></tr>
+              </thead>
+              <tbody id="myTasksBody">
+                <tr><td colspan="5" class="loading"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users Panel (Admin) -->
+      <div id="panel-users" class="panel">
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Name</th><th>Email</th><th>Roles</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="usersBody">
+                <tr><td colspan="5" class="loading"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /main-content -->
+  </main>
+</div>
+
+<!-- ── Task Detail Modal ────────────────────────────────────── -->
+<div id="taskModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="taskModalTitle">Task</h2>
+      <button class="close-btn" onclick="Tasks.closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;font-size:13px">
+        <div><span style="color:var(--gray-400)">Assignee: </span><span id="taskAssignee"></span></div>
+        <div><span style="color:var(--gray-400)">Priority: </span><span id="taskPriority"></span></div>
+        <div><span style="color:var(--gray-400)">Created by: </span><span id="taskCreatedBy"></span></div>
+        <div><span style="color:var(--gray-400)">Created: </span><span id="taskCreatedAt"></span></div>
+        <div><span style="color:var(--gray-400)">Due: </span><span id="taskDue"></span></div>
+      </div>
+      <p id="taskDesc" style="color:var(--gray-600);margin-bottom:20px"></p>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <label style="font-weight:500;font-size:13px">Status:</label>
+        <select id="taskStatusSelect" style="padding:6px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:13px">
+          <option value="0">Todo</option>
+          <option value="1">In Progress</option>
+          <option value="2">In Review</option>
+          <option value="3">Done</option>
+          <option value="4">Cancelled</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="Tasks.patchStatus()">Update</button>
+        <span id="taskStatusFeedback" style="color:var(--success);font-size:12px"></span>
+      </div>
+
+      <div class="comments-section">
+        <h4>Comments</h4>
+        <div id="commentList"></div>
+        <div class="comment-form">
+          <textarea id="commentInput" placeholder="Add a comment..."></textarea>
+          <button class="btn btn-primary btn-sm" onclick="Tasks.addComment()">Post</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Create Project Modal ─────────────────────────────────── -->
+<div id="projectModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="projectFormTitle">New Project</h2>
+      <button class="close-btn" onclick="Projects.closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="projectForm" onsubmit="event.preventDefault();Projects.saveProject()">
+        <div class="form-group">
+          <label>Project Name *</label>
+          <input id="pName" type="text" placeholder="My Awesome Project" required maxlength="200" />
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="pDesc" rows="3" placeholder="What is this project about?" maxlength="1000"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Due Date</label>
+          <input id="pDue" type="date" />
+        </div>
+        <div class="modal-footer" style="padding:0;margin-top:16px">
+          <button type="button" class="btn btn-secondary" onclick="Projects.closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── Create Task Modal ────────────────────────────────────── -->
+<div id="taskCreateModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>New Task</h2>
+      <button class="close-btn" onclick="Tasks.closeCreateModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="taskForm" onsubmit="event.preventDefault();Tasks.saveTask()">
+        <div class="form-group">
+          <label>Title *</label>
+          <input id="tTitle" type="text" placeholder="Task title" required maxlength="300" />
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="tDesc" rows="3" placeholder="Describe the task..." maxlength="2000"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="tPriority">
+              <option value="0">Low</option>
+              <option value="1" selected>Medium</option>
+              <option value="2">High</option>
+              <option value="3">Critical</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Due Date</label>
+            <input id="tDue" type="date" />
+          </div>
+        </div>
+        <div class="modal-footer" style="padding:0;margin-top:16px">
+          <button type="button" class="btn btn-secondary" onclick="Tasks.closeCreateModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script src="/js/dashboard.js"></script>
+<script src="/js/projects.js"></script>
+<script src="/js/tasks.js"></script>
+</body>
+</html>
